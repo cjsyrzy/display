@@ -17,6 +17,8 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 # add_subdirectory(lv_demos)
 # list(APPEND EXTRA_LIBS lv_demos)
 
+set(LV_CONF_BUILD_DISABLE_EXAMPLES 1)
+set(LV_CONF_BUILD_DISABLE_DEMOS 1)
 add_subdirectory(lvgl)
 list(APPEND EXTRA_LIBS lvgl)
 
