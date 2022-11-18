@@ -14,12 +14,11 @@
 
 #include "lvgl/lvgl.h"
 
-
 /*********************
  *      DEFINES
  *********************/
-#define HOR_RES 90
-#define VER_RES 49
+#define HOR_RES 100
+#define VER_RES 40
 /**********************
  *      TYPEDEFS
  **********************/
@@ -30,39 +29,96 @@
 static lv_disp_drv_t disp_drv;
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t disp_buf1[HOR_RES * VER_RES];
-lv_color_t buf[HOR_RES * VER_RES];
-static lv_disp_t * dispplay = NULL;
+uint8_t buf[HOR_RES * VER_RES + 100];
+static lv_disp_t *dispplay = NULL;
 
-static void flush_cb(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
+uint8_t enable_display = 0;
+
+static void flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p)
 {
     LV_UNUSED(area);
     LV_UNUSED(color_p);
 
-    static int i,j;
-    for(j=area->y1; j<=area->y2; j++)
+    static int i, j;
+    int k = 0;
+
+    for (j = area->y1; j <= area->y2; j++)
     {
-        for(i=area->x1; i<=area->x2; i++)
+        for (i = area->x1; i <= area->x2; i++)
         {
-            buf[j*HOR_RES + i].full = color_p->full;
+            // buf[j * HOR_RES + i].full = color_p->full;
+
+            // if(color_p->full == 255)
+            // {
+            //     buf[k++] = ' ';
+            // }
+            // else
+            // {
+            //     buf[k++] = '1';
+            // }
+
+            if ((color_p->ch.blue > 0) && (color_p->ch.red > 0) && (color_p->ch.green > 0))
+            {
+                buf[k++] = ' ';
+            }
+            else
+            {
+                buf[k++] = '1';
+            }
+
+            // if (color_p->ch.red == 0)
+            // {
+            //     buf[k++] = '1';
+            // }
+            // else
+            // {
+            //     if (color_p->ch.blue == 0)
+            //         buf[k++] = '1';
+            //     else
+            //         buf[k++] = ' ';
+            // }
             color_p++;
         }
+        buf[k++] = '\r';
+        buf[k++] = '\n';
+    }
+    buf[k] = 0;
+
+    if (enable_display)
+    {
+        puts(buf);
     }
 
-    
-    i = 0;
-    do
-    {   if(i%HOR_RES == 0)
-        printf("\r\n");
+    // printf("x1 = %d", area->x1);
+    // printf("x2 = %d", area->x2);
+    // printf("y1 = %d", area->y1);
+    // printf("y2 = %d", area->y2);
+    // printf("\r\n");
 
-        if(buf[i].full)
-        {
-            putchar('8');
-        }
-        else
-        {
-            putchar(' ');
-        }
-    } while (++ i < HOR_RES*VER_RES);
+    // if (((area->x1 == 0) && (area->x2 == HOR_RES)) && ((area->y1 == 0) && (area->y2 == VER_RES)))
+    // {
+    //     printf("full");
+    // }
+    // else
+    // {
+    //     printf("not full");
+    // }
+
+    // i = 0;
+    // do
+    // {
+    //     if(i%HOR_RES == 0)
+    //         printf("\r\n");
+
+    //     if(color_p[i].full)
+    //     {
+    //         putchar('8');
+    //     }
+    //     else
+    //     {
+    //         putchar(' ');
+    //     }
+    // } while (++ i < HOR_RES*VER_RES);
 
     lv_disp_flush_ready(disp_drv);
 }
@@ -116,8 +172,8 @@ static void my_widget(void)
     // lv_obj_set_style_text_align(label1, LV_TEXT_ALIGN_CENTER, 0);
     // lv_obj_align(label1, LV_ALIGN_CENTER, 0, -40);
 
-    lv_obj_t * label2 = lv_label_create(lv_scr_act());
-    lv_label_set_long_mode(label2, LV_LABEL_LONG_SCROLL_CIRCULAR);     /*Circular scroll*/
+    lv_obj_t *label2 = lv_label_create(lv_scr_act());
+    lv_label_set_long_mode(label2, LV_LABEL_LONG_SCROLL_CIRCULAR); /*Circular scroll*/
     lv_obj_set_width(label2, 80);
     lv_label_set_text(label2, "It is a circularly scrolling text. ");
     lv_obj_align(label2, LV_ALIGN_CENTER, 0, 0);
@@ -126,7 +182,22 @@ static void my_widget(void)
     // lv_textarea_set_text(ta, "ABCDE abcde");
     // lv_obj_set_size(ta, 148, 40);
     // lv_obj_align(ta, LV_ALIGN_CENTER, 0, 0);
+}
 
+static void lv_example_gif_1(void)
+{
+    // LV_IMG_DECLARE(img_bulb_gif);
+    lv_obj_t *img;
+
+    // img = lv_gif_create(lv_scr_act());
+    // lv_gif_set_src(img, &img_bulb_gif);
+    // lv_obj_align(img, LV_ALIGN_LEFT_MID, 20, 0);
+
+    img = lv_gif_create(lv_scr_act());
+    /* Assuming a File system is attached to letter 'A'
+     * E.g. set LV_USE_FS_STDIO 'A' in lv_conf.h */
+    lv_gif_set_src(img, "C:/Users/zhang.yu126/Desktop/display/test.gif");
+    lv_obj_align(img, LV_ALIGN_RIGHT_MID, 0, 0);
 }
 
 /**********************
@@ -152,9 +223,16 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR szCmdLi
     LV_LOG_USER("LVGL initialization completed!");
 
     /*Run the demo*/
-    my_widget();
+    // my_widget();
+    lv_example_gif_1();
 
-    while(1) {
+    if (strcmp("1", szCmdLine) == 0)
+    {
+        enable_display = 1;
+    }
+
+    while (1)
+    {
         /* Periodically call the lv_task handler.
          * It could be done in a timer interrupt or an OS task too.*/
         lv_task_handler();
